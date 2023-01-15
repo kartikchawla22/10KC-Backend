@@ -20,7 +20,6 @@ exports.uploadImage = async (req, res) => {
             return response({ res, data: { imageId: uploadProcess.imageId, imageName: uploadProcess.imageName } })
         }
     } catch (error) {
-        console.log("in catch");
         return response({ res, errorCode: 500, error })
     }
 }
@@ -45,7 +44,7 @@ exports.deleteImageUsingID = async (req, res) => {
         const { imageId } = req.query
         const deletedImage = await ImagesModel.deleteOne({ imageId });
         if (deletedImage.deletedCount > 0) {
-            return response({ res, data: { deletedImage, imageId } });
+            return response({ res, data: { deletedImage, imageId: parseInt(imageId) } });
         } else {
             return response({ res, error: `Image id ${imageId} not found.` });
 
