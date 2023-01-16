@@ -1,8 +1,8 @@
 const response = (obj) => {
     const { res, data = null, error = null, errorCode = 422 } = obj;
     if (!data && !error) {
-        return res.json({
-            message: "Sorry No Data found",
+        return res.status(errorCode).json({
+            error: "Sorry No Data found"
         });
     }
     if (error) {
