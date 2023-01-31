@@ -1,12 +1,13 @@
 const mongoose = require("mongoose");
 const autoIncrement = require('mongoose-auto-increment');
-require("dotenv").config();
+const dotenv = require("dotenv");
 const Schema = mongoose.Schema;
+
+dotenv.config();
 const { MONGO_USER, MONGO_PASSOWRD, MONGO_DB } = process.env;
 const uri = `mongodb+srv://${MONGO_USER}:${MONGO_PASSOWRD}@cluster0.pgtzola.mongodb.net/${MONGO_DB}?retryWrites=true&w=majority`;
-const connection = mongoose.createConnection(uri);
 
-autoIncrement.initialize(connection);
+mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true });
 
 const Image = new Schema({
     imageId: {
@@ -26,6 +27,8 @@ const Image = new Schema({
     },
 });
 
-
+autoIncrement.initialize(mongoose.connection);
 Image.plugin(autoIncrement.plugin, { model: 'Image', field: 'imageId' });
-module.exports = mongoose.model("Images", Image);
+const ImageModel = mongoose.model("Images", Image);
+
+module.exports = ImageModel;

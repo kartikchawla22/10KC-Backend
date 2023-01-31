@@ -1,55 +1,54 @@
 const ImagesModel = require("../models/imagesModel");
-const response = require("../utils/response")
+const response = require("../utils/response");
 
 exports.uploadImage = async (req, res) => {
     try {
-        if (req.fileValidationError) {
-            return response({ res, errorCode: 500, error: req.fileValidationError })
+        const { fileValidationError, file, body } = req;
+        if (fileValidationError) {
+            return response({ res, errorCode: 500, error: fileValidationError });
         }
-        if (!req.file) {
-            return response({ res, error: "No File Found", errorCode: 422 })
-        } else {
-            const imageUploadObject = {
-                imageBuffer: req.file.buffer,
-                contentType: req.file.mimetype,
-                imageName: req.body.imageName
-            };
-            const uploadObject = new ImagesModel(imageUploadObject);
-            // saving the object into the database
-            const uploadProcess = await uploadObject.save();
-            return response({ res, data: { imageId: uploadProcess.imageId, imageName: uploadProcess.imageName } })
+        if (!file) {
+            return response({ res, error: "No File Found", errorCode: 422 });
         }
+        const { buffer: imageBuffer, mimetype: contentType } = file;
+        const { imageName } = body;
+        const uploadObject = new ImagesModel({ imageBuffer, contentType, imageName });
+        const uploadProcess = await uploadObject.save();
+        return response({
+            res,
+            data: { imageId: uploadProcess.imageId, imageName: uploadProcess.imageName },
+        });
     } catch (error) {
-        return response({ res, errorCode: 500, error })
+        return response({ res, errorCode: 500, error });
     }
-}
+};
 
 exports.getAllImages = async (req, res) => {
     try {
-        let convertedImages = []
         const images = await ImagesModel.find();
-        if (images.length > 0) {
-            convertedImages = images.map(({ _doc }) => {
-                return { ..._doc, imageBuffer: `data:${_doc.contentType};base64,${Buffer.from(_doc.imageBuffer).toString("base64")}` }
-            })
-        }
+        const convertedImages = images.map(({ _doc: { contentType, imageBuffer, ...rest } }) => {
+            return {
+                ...rest,
+                imageBuffer: `data:${contentType};base64,${Buffer.from(imageBuffer).toString(
+                    "base64"
+                )}`,
+            };
+        });
         return response({ res, data: convertedImages.length ? convertedImages : null });
     } catch (error) {
         response({ res, error });
     }
-}
+};
 
 exports.deleteImageUsingID = async (req, res) => {
     try {
-        const { imageId } = req.query
+        const { imageId } = req.query;
         const deletedImage = await ImagesModel.deleteOne({ imageId });
         if (deletedImage.deletedCount > 0) {
             return response({ res, data: { deletedImage, imageId: parseInt(imageId) } });
-        } else {
-            return response({ res, error: `Image id ${imageId} not found.` });
-
         }
+        return response({ res, error: `Image id ${imageId} not found.` });
     } catch (error) {
         response({ res, error });
     }
-}
+};
